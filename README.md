@@ -1,3 +1,32 @@
+# Unofficial ROCKNIX port for the Poco F1 (beryllium-ebbg)
+
+**Built for personal use.** This is an unofficial ROCKNIX device port for the
+Xiaomi Poco F1 (codename *beryllium*, EBBG panel variant / Snapdragon 845).
+
+### How it was built
+This port was developed almost entirely using **agentic AI (Claude Opus 4.8)** —
+the device target, kernel configuration, build fixes, and bring-up were driven
+through an AI coding agent. It's an experiment as much as a device port.
+
+### Scope & support
+- **Personal project, no support.** Built for my own device and use case; issues
+  and PRs may go unanswered, and there are no guarantees it works for you.
+- **EBBG panel only.** I have **no intention of supporting the Tianma panel
+  variant or any other sdm845 device** (OnePlus 6/6T, Mi 8, etc.).
+- **…but feel free to reuse anything.** The `SDM845` target is structured as a
+  generic sdm845 platform — if you want to add the Tianma panel or another
+  sdm845 device, take whatever is useful from this fork.
+
+### Firmware
+Proprietary per-device firmware (DSP/GPU blobs) is **not included** and is
+gitignored — extract it from your own device (see the firmware README under
+`projects/ROCKNIX/devices/SDM845/`).
+
+*Not affiliated with or endorsed by the ROCKNIX project. A more detailed
+technical write-up will be added once the port boots.*
+
+---
+
 <img src="https://github.com/ROCKNIX/distribution/blob/next/distributions/ROCKNIX/logos/rocknix-logo.png?raw=yes" width=192>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Latest Version](https://img.shields.io/github/release/ROCKNIX/distribution.svg?color=FF5555&label=latest%20version&style=flat-square)](https://github.com/ROCKNIX/distribution/releases/latest) [![Activity](https://img.shields.io/github/commit-activity/m/ROCKNIX/distribution?color=FF5555&style=flat-square)](https://github.com/ROCKNIX/distribution/commits) [![Pull Requests](https://img.shields.io/github/issues-pr-closed/ROCKNIX/distribution?color=FF5555&style=flat-square)](https://github.com/ROCKNIX/distribution/pulls) [![Discord Server](https://img.shields.io/discord/948029830325235753?color=FF5555&label=chat&style=flat-square)](https://discord.gg/seTxckZjJy)
 
 ---

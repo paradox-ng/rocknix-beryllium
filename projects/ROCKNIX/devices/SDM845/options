@@ -1,0 +1,102 @@
+################################################################################
+# setup device defaults
+################################################################################
+
+  # The TARGET_CPU variable controls which processor should be targeted for
+  # generated code.
+  # SDM845 (Kryo 385 = 4x Cortex-A75 + 4x Cortex-A55), as on the Xiaomi Poco F1 (beryllium).
+    case ${TARGET_ARCH} in
+      aarch64)
+        TARGET_CPU="cortex-a75.cortex-a55"
+        TARGET_CPU_FLAGS="+crypto+crc+fp+simd"
+        ;;
+      arm)
+        TARGET_KERNEL_ARCH="arm64"
+        TARGET_FLOAT="hard"
+        TARGET_CPU="cortex-a75.cortex-a55"
+        TARGET_CPU_FLAGS="+crc"
+        TARGET_FPU="crypto-neon-fp-armv8"
+        ;;
+    esac
+
+    PARTITION_TABLE="gpt"
+    HW_CPU="Snapdragon 845"
+
+  # Kernel target
+    KERNEL_TARGET="Image"
+
+  # Additional kernel make parameters (for example to specify the u-boot loadaddress)
+    KERNEL_MAKE_EXTRACMD=" $(get_kernel_make_extracmd)"
+
+  # Kernel cmdline
+    EXTRA_CMDLINE="rootwait quiet video=efifb:off console=tty0"
+
+  # Bootloader to use (syslinux / u-boot)
+    BOOTLOADER="qcom-abl"
+
+  # Adreno GPU family
+    GRAPHIC_DRIVERS="freedreno"
+
+  # For maximum cross compatbility
+    PREFER_GLES="no"
+
+  # VULKAN_SUPPORT
+    VULKAN_SUPPORT="yes"
+
+  # Vulkan implementation to use (vulkan-loader / no)
+    VULKAN="vulkan-loader"
+
+  # Displayserver to use (wl / no)
+    DISPLAYSERVER="wl"
+
+  # Windowmanager to use (weston / swaywm-env / no)
+    WINDOWMANAGER="swaywm-env"
+
+  # Grub rotation (only consumed by the grub/EFI path; the qcom-abl path rotates
+  # via the Wayland compositor + device quirk. The F1 panel is native portrait
+  # (1080x2246) and the handheld is held in landscape, so we rotate 90/270.)
+    GRUB_ROTATION="90"
+
+  # Additional drivers to install:
+  # for a list of additional drivers see packages/linux-drivers
+  # Space separated list is supported,
+  # e.g. ADDITIONAL_DRIVERS="DRIVER1 DRIVER2"
+    ADDITIONAL_DRIVERS=""
+
+  # Additional Firmware to use ( )
+  # Space separated list is supported,
+  # e.g. FIRMWARE=""
+    FIRMWARE="extra-firmware"
+
+  # Additional packages to install
+  # NOTE: rocknix-abl intentionally dropped - it ships a per-device prebuilt
+  # signed ABL (abl_signed-<DEVICE>.elf) that only exists for the official
+  # handhelds. The Poco F1 boots a standard fastboot Android boot image instead.
+  # rmtfs/tqftpserv/pd-mapper are the Qualcomm modem/DSP userspace daemons the
+  # sdm845 needs for remoteproc firmware loading (ADSP/CDSP/modem).
+    ADDITIONAL_PACKAGES="gamepadcalibration inputplumber pd-mapper rmtfs tqftpserv"
+
+  # 32-bit libretro cores. Distro default is true, but that requires building a
+  # full ARCH=arm pass first (the aarch64 pass copies 32-bit cores from
+  # build.${DISTRO}-${DEVICE}.arm). Disabled for initial bring-up to avoid the
+  # extra pass; re-enable in phase 2 with a proper arm+aarch64 build for the
+  # handful of cores that are 32-bit-only or faster in 32-bit (e.g. pcsx_rearmed).
+    ENABLE_32BIT="false"
+
+  # Debug tty path
+    DEBUG_TTY="/dev/ttyMSM0"
+
+  # Build and install rocknix joypad driver (yes / no)
+    ROCKNIX_JOYPAD="no"
+
+  # ZRAM Algorithm
+    ZRAM_COMPRESSION_ALGO="zstd"
+
+  # ZRAM Size ("Auto" lets rocknix-memory-manager size it by RAM tier; the F1 is
+  # 6GB -> mid-RAM tier. zram (zstd) is our first-tier compressed swap.)
+    ZRAM_SWAP_SIZE="Auto"
+
+  # Disk Swap (MB). Second-tier swapfile at /storage/.cache/swapfile. 6GB device
+  # running FEX+Proton/Steam wants real swap headroom beyond zram. Runtime-tunable
+  # via /storage/.config/swap.conf.
+    SWAP_FILE_SIZE="4096"

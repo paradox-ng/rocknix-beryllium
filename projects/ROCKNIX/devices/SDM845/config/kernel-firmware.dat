@@ -1,0 +1,18 @@
+# WiFi: ath10k WCN3990 (same radio as the Poco F1)
+ath10k/WCN3990/hw1.0/*.bin
+ath10k/WCN3990/hw1.0/wlanmdsp.mbn
+
+# Bluetooth: QCA WCN3990
+qca/crbtfw21.tlv
+qca/crnv21.bin
+
+# GPU: Adreno 630 (sdm845)
+qcom/a630_sqe.fw
+qcom/a630_gmu.bin
+
+# Video codec (Venus)
+qcom/venus-6.0/*
+
+# SoC firmware (ADSP/CDSP/modem) - beryllium ships its own signed blobs;
+# placeholder path, populated from the device during bring-up.
+qcom/sdm845/*

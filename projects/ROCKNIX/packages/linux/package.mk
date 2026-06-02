@@ -16,7 +16,7 @@ PKG_STAMP="${KERNEL_TARGET} ${KERNEL_MAKE_EXTRACMD}"
 PKG_PATCH_DIRS="${LINUX} mainline ${DEVICE} default"
 
 [[ "${DEVICE}" == RK* ]] && PKG_PATCH_DIRS+=" mainline-rockchip"
-[[ "${DEVICE}" == SM* ]] && PKG_DEPENDS_TARGET+=" mkbootimg:host"
+[[ "${DEVICE}" == SM* || "${DEVICE}" == SDM845 ]] && PKG_DEPENDS_TARGET+=" mkbootimg:host"
 
 case ${DEVICE} in
   RK3588)
@@ -25,7 +25,7 @@ case ${DEVICE} in
     PKG_GIT_CLONE_BRANCH="rk-6.1-rkr3"
     PKG_PATCH_DIRS="${LINUX} ${DEVICE} default"
     ;;
-  H700|SM8250|SM8650|SM8750|SM8550|SM6115)
+  H700|SM8250|SM8650|SM8750|SM8550|SM6115|SDM845)
     PKG_VERSION="7.0.10"
     PKG_URL="https://www.kernel.org/pub/linux/kernel/v${PKG_VERSION/.*/}.x/${PKG_NAME}-${PKG_VERSION}.tar.xz"
     PKG_PATCH_DIRS+=" 7.0"

@@ -48,3 +48,7 @@ projects/**/*.old
 /.env
 /.es_cache
 /.config
+
+# SDM845/beryllium: proprietary per-device firmware (extract from your own device's
+# MIUI/vendor or a pmOS install; NOT redistributable - do not commit)
+projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/

@@ -248,6 +248,19 @@ pre_make_target() {
 
     ${PKG_BUILD}/scripts/config --set-str CONFIG_EXTRA_FIRMWARE "${FW_LIST}"
     ${PKG_BUILD}/scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR "external-firmware"
+  elif [ "${TARGET_ARCH}" = "aarch64" -a "${DEVICE}" = "SDM845" ]; then
+    # Embed the Adreno 630 microcode (fixed names the a6xx driver requests) so the
+    # GPU - and therefore the Wayland UI - comes up regardless of rootfs timing.
+    # (pmOS shipped these .zst and failed to load them; we embed uncompressed.)
+    # The larger DSP blobs (adsp/cdsp/slpi) load late from /lib/firmware on rootfs.
+    mkdir -p ${PKG_BUILD}/external-firmware/qcom
+      cp -Lv ${PROJECT_DIR}/${PROJECT}/devices/${DEVICE}/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/a630_gmu.bin ${PKG_BUILD}/external-firmware/qcom
+      cp -Lv ${PROJECT_DIR}/${PROJECT}/devices/${DEVICE}/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/a630_sqe.fw ${PKG_BUILD}/external-firmware/qcom
+
+    FW_LIST="$(find ${PKG_BUILD}/external-firmware -type f | sed 's|.*external-firmware/||' | sort | xargs)"
+
+    ${PKG_BUILD}/scripts/config --set-str CONFIG_EXTRA_FIRMWARE "${FW_LIST}"
+    ${PKG_BUILD}/scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR "external-firmware"
   fi
 
   kernel_make listnewconfig

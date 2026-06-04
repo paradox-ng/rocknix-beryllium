@@ -1,0 +1,14 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# beryllium (Poco F1): the USB port is dual-role (dr_mode=otg) but there is no
+# Type-C role auto-detection in mainline, so it won't switch to host on its own.
+# Default to HOST on first boot so a USB keyboard/controller/hub can be plugged
+# to do initial setup (pair a BT controller, configure WiFi) on a device with no
+# built-in controls. The 'disabled' gadget mode performs set_role host.
+# Switch to "network"/"file_transfer" (device mode, enables charging + USB-net)
+# from the ES USB setting afterwards; a stored choice is respected here.
+GC=/storage/.cache/usbgadget/usbgadget.conf
+USB_MODE=""
+[ -f "$GC" ] && . "$GC"
+[ -z "$USB_MODE" ] && /usr/bin/usbgadget start disabled
+exit 0

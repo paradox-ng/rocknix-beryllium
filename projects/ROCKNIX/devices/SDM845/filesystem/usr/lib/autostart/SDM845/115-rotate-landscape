@@ -1,0 +1,13 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# beryllium (Poco F1): the DSI panel is native portrait and the device is held
+# in landscape. msm DRM ignores fbcon=rotate, so 111-sway-init's auto-detect
+# leaves "transform 0". Force the landscape transform here (this device script
+# runs after the common 111-sway-init and before the compositor is started).
+SWAY_CONFIG="/storage/.config/sway/config"
+[ -f "$SWAY_CONFIG" ] || exit 0
+# 270 = clockwise; flip to 90 if it ends up upside-down.
+sed -i 's/\(^output DSI[^ ]* transform \).*/\1270/' "$SWAY_CONFIG"
+# keep touchscreen aligned with the rotated output
+grep -q 'map_to_output DSI' "$SWAY_CONFIG" || \
+  echo 'input type:touch map_to_output DSI-1' >> "$SWAY_CONFIG"

@@ -1,0 +1,15 @@
+[Unit]
+Description=Stable WiFi MAC for beryllium (WCN3990 has no stored MAC)
+DefaultDependencies=no
+After=local-fs.target
+Before=NetworkManager.service network-pre.target
+Wants=network-pre.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/rocknix/beryllium-wifi-mac
+
+[Install]
+WantedBy=NetworkManager.service

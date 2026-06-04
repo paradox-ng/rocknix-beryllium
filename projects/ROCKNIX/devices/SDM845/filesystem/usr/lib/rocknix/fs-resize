@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2009-2014 Stephan Raue (stephan@openelec.tv)
+#
+# Phone-safe fs-resize for sdm845 / qcom-abl devices.
+#
+# The stock fs-resize is written for removable media (SD card / USB) where the
+# STORAGE partition is part2 of the boot medium and must be *grown* to fill the
+# card. It derives the disk node with `sed s/[0-9]$//g` (assumes a single-digit
+# partition number) and runs `parted resizepart`. On a phone the STORAGE
+# partition is a fixed entry in the Android GPT (e.g. /dev/sda21 = userdata),
+# already at full size. The stock logic turns /dev/sda21 into DISK=/dev/sda2,
+# PARTNUM=1 and `parted resizepart` then scribbles a partition table onto the
+# WRONG device, corrupting STORAGE's group-0 metadata. We must NEVER repartition
+# here -- only grow the filesystem to fill the existing partition with resize2fs.
+
+StartProgressLog() {
+  if [ "$1" = "spinner" ]; then
+    echo "*** $3" >>$LOG
+  fi
+  StartProgress "$@"
+}
+
+if [ -e /storage/.please_resize_me ] ; then
+  . /usr/lib/rocknix/functions
+
+  hidecursor
+
+  mount -o remount,rw /flash
+  LOG=/flash/fs-resize.log
+  date -Iseconds >>$LOG
+
+  # never resize an already-initialised system
+  if [ -d /storage/.config -o -d /storage/.cache ] ; then
+    rm -f /storage/.please_resize_me
+    sync
+    echo "Resizing is not permitted - the system has already been initialised." | tee -a $LOG
+    mount -o remount,ro /flash
+    StartProgress countdown "Rebooting in 5s... " 5 "NOW"
+    reboot -f
+  fi
+
+  # STORAGE block device as mounted (e.g. /dev/sda21). We do NOT touch the
+  # partition table -- the Android GPT partition is fixed and already full size.
+  echo $(grep "/storage " /proc/mounts) >>$LOG
+  PART=$(grep "/storage " /proc/mounts | cut -d" " -f1 | grep '[0-9]$')
+
+  rm -f /storage/.please_resize_me
+  sync
+
+  echo "PART: $PART  (filesystem-only resize; partition table untouched)" >>$LOG
+
+  if [ -n "$PART" ] ; then
+    umount $PART
+
+    echo "FILE SYSTEM RESIZING IN PROGRESS"
+    echo ""
+    echo "Please do not reboot or turn off your device!"
+    echo ""
+
+    StartProgressLog spinner "Checking file system... " "e2fsck -f -p $PART >>$LOG 2>&1"
+    StartProgressLog spinner "Resizing file system... " "resize2fs $PART >>$LOG 2>&1"
+    StartProgressLog spinner "Regenerating UUID...    " "tune2fs $PART -U random >>$LOG 2>&1"
+    StartProgressLog spinner "Syncing to disk...      " "sync >>$LOG 2>&1"
+    StartProgress countdown "Rebooting in 5s...     " 5 "NOW"
+  else
+    echo "STORAGE partition not detected - resize aborted." >>$LOG
+    StartProgress countdown "Rebooting in 5s... " 5 "NOW"
+  fi
+  mount -o remount,ro /flash
+fi
+reboot -f &>/dev/null

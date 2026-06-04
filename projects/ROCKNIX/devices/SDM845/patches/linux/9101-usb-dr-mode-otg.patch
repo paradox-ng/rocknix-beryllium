@@ -1,0 +1,19 @@
+From: ROCKNIX beryllium port
+Subject: [PATCH] arm64: dts: beryllium: USB dual-role (otg) for controllers
+
+The stock beryllium DT hardwires the USB port to "peripheral" (device only),
+so USB host (game controllers, keyboards, hubs) never works. Switch to dual-role
+"otg" so the port can act as host when a peripheral is attached while still
+supporting device mode (gadget/charging) on a PC/charger.
+
+--- a/arch/arm64/boot/dts/qcom/sdm845-xiaomi-beryllium-common.dtsi
++++ b/arch/arm64/boot/dts/qcom/sdm845-xiaomi-beryllium-common.dtsi
+@@ -864,7 +864,7 @@
+ };
+
+ &usb_1_dwc3 {
+-	dr_mode = "peripheral";
++	dr_mode = "otg";
+ };
+
+ &usb_1_hsphy {

@@ -25,10 +25,22 @@ case ${DEVICE} in
     PKG_GIT_CLONE_BRANCH="rk-6.1-rkr3"
     PKG_PATCH_DIRS="${LINUX} ${DEVICE} default"
     ;;
-  H700|SM8250|SM8650|SM8750|SM8550|SM6115|SDM845)
+  H700|SM8250|SM8650|SM8750|SM8550|SM6115)
     PKG_VERSION="7.0.10"
     PKG_URL="https://www.kernel.org/pub/linux/kernel/v${PKG_VERSION/.*/}.x/${PKG_NAME}-${PKG_VERSION}.tar.xz"
     PKG_PATCH_DIRS+=" 7.0"
+    ;;
+  SDM845)
+    # Poco F1 (beryllium): use the sdm845-mainline community fork (what pmOS ships),
+    # which carries sdm845 fixes not yet upstream. Pure mainline 7.0.10 crashes
+    # early on beryllium; this fork boots.
+    PKG_VERSION="sdm845-7.1-rc1-r0"
+    PKG_URL="https://gitlab.com/sdm845-mainline/linux/-/archive/${PKG_VERSION}/linux-${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_NAME="linux-${PKG_VERSION}.tar.gz"
+    PKG_PATCH_DIRS="${DEVICE}"
+    # 7.1-rc1 perf pulls in a Rust test component our toolchain can't build; we
+    # don't need perf to boot.
+    PKG_BUILD_PERF="no"
     ;;
   RK3399|RK3576|RK3566)
     PKG_VERSION="7.0.2"
@@ -253,9 +265,16 @@ pre_make_target() {
     # GPU - and therefore the Wayland UI - comes up regardless of rootfs timing.
     # (pmOS shipped these .zst and failed to load them; we embed uncompressed.)
     # The larger DSP blobs (adsp/cdsp/slpi) load late from /lib/firmware on rootfs.
+    # The zap shader MUST be embedded too: the built-in GPU driver probes during
+    # early kernel init (before the initramfs populates /lib/firmware), so a
+    # rootfs-only zap fails to load (-2 / "gpu hw init failed"), and a later
+    # service touching the dead GPU then hangs the kernel.
+    BERYLLIUM_FW=${PROJECT_DIR}/${PROJECT}/devices/${DEVICE}/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom
     mkdir -p ${PKG_BUILD}/external-firmware/qcom
-      cp -Lv ${PROJECT_DIR}/${PROJECT}/devices/${DEVICE}/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/a630_gmu.bin ${PKG_BUILD}/external-firmware/qcom
-      cp -Lv ${PROJECT_DIR}/${PROJECT}/devices/${DEVICE}/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/a630_sqe.fw ${PKG_BUILD}/external-firmware/qcom
+      cp -Lv ${BERYLLIUM_FW}/a630_gmu.bin ${PKG_BUILD}/external-firmware/qcom
+      cp -Lv ${BERYLLIUM_FW}/a630_sqe.fw ${PKG_BUILD}/external-firmware/qcom
+    mkdir -p ${PKG_BUILD}/external-firmware/qcom/sdm845/Xiaomi/beryllium
+      cp -Lv ${BERYLLIUM_FW}/sdm845/Xiaomi/beryllium/a630_zap.mbn ${PKG_BUILD}/external-firmware/qcom/sdm845/Xiaomi/beryllium
 
     FW_LIST="$(find ${PKG_BUILD}/external-firmware -type f | sed 's|.*external-firmware/||' | sort | xargs)"
 

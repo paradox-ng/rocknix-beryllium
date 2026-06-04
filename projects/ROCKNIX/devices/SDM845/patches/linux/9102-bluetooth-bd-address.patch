@@ -1,0 +1,19 @@
+From: ROCKNIX beryllium port
+Subject: [PATCH] arm64: dts: beryllium: give Bluetooth a fixed BD address
+
+The WCN3990 on beryllium has no valid stored Bluetooth address (same as the
+WiFi random-MAC situation). WiFi copes by generating a random MAC, but the QCA
+Bluetooth controller refuses to initialise without a valid BD address: hci0 comes
+up "DOWN RAW" and `hciconfig hci0 up` fails with "Operation not supported". Give
+it a fixed, locally-administered address via local-bd-address so hci_qca can
+program it and the controller initialises.
+
+--- a/arch/arm64/boot/dts/qcom/sdm845-xiaomi-beryllium-common.dtsi
++++ b/arch/arm64/boot/dts/qcom/sdm845-xiaomi-beryllium-common.dtsi
+@@ -835,6 +835,7 @@
+ 		vddrf-supply = <&vreg_l17a_1p3>;
+ 		vddch0-supply = <&vreg_l25a_3p3>;
+ 		max-speed = <3200000>;
++		local-bd-address = [ 02 00 00 f1 be ba ];
+ 	};
+ };

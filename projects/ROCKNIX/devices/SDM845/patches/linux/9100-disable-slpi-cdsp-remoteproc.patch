@@ -1,0 +1,30 @@
+From: ROCKNIX beryllium port
+Subject: [PATCH] arm64: dts: beryllium: disable slpi and cdsp remoteprocs
+
+The sensor DSP (slpi) and compute DSP (cdsp) are not used by ROCKNIX. On
+beryllium the slpi firmware crash-loops ("USER-PD DOG detects stalled
+initialization") every ~40s and its glink/fastrpc endpoint then re-probes and
+fails with -22 in a tight storm, starving userspace (D-Bus/systemd) and stalling
+the boot. We only need adsp (audio), so disable slpi and cdsp. This stops the
+crash loop and the fastrpc -22 flood.
+
+--- a/arch/arm64/boot/dts/qcom/sdm845-xiaomi-beryllium-common.dtsi
++++ b/arch/arm64/boot/dts/qcom/sdm845-xiaomi-beryllium-common.dtsi
+@@ -371,7 +371,7 @@
+ };
+
+ &cdsp_pas {
+-	status = "okay";
++	status = "disabled";
+ 	firmware-name = "qcom/sdm845/Xiaomi/beryllium/cdsp.mbn";
+ };
+
+@@ -631,7 +631,7 @@
+ &slpi_pas {
+ 	firmware-name = "qcom/sdm845/Xiaomi/beryllium/slpi.mbn";
+
+-	status = "okay";
++	status = "disabled";
+ };
+
+ &sound {

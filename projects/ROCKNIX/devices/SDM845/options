@@ -74,7 +74,7 @@
   # handhelds. The Poco F1 boots a standard fastboot Android boot image instead.
   # rmtfs/tqftpserv/pd-mapper are the Qualcomm modem/DSP userspace daemons the
   # sdm845 needs for remoteproc firmware loading (ADSP/CDSP/modem).
-    ADDITIONAL_PACKAGES="gamepadcalibration inputplumber pd-mapper rmtfs tqftpserv"
+    ADDITIONAL_PACKAGES="gamepadcalibration inputplumber pd-mapper rmtfs tqftpserv xpadneo"
 
   # 32-bit libretro cores. Distro default is true, but that requires building a
   # full ARCH=arm pass first (the aarch64 pass copies 32-bit cores from

@@ -50,5 +50,14 @@ projects/**/*.old
 /.config
 
 # SDM845/beryllium: proprietary per-device firmware (extract from your own device's
-# MIUI/vendor or a pmOS install; NOT redistributable - do not commit)
-projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/
+# MIUI/vendor or a pmOS install; NOT redistributable - do not commit).
+# Narrowed to the beryllium/ blob dir so the extraction README beside it stays tracked.
+# (The a630 GPU microcode under qcom/ IS redistributable - from linux-firmware,
+#  LICENSE.qcom - and is committed.)
+projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/beryllium/
+
+# Build artifacts / scratch (large images, never commit)
+/flash/
+
+# Parked upstream patches disabled in this fork (kept locally as reference)
+projects/ROCKNIX/devices/SDM845/patches/linux/_disabled_for_fork/

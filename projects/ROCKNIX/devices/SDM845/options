@@ -74,14 +74,19 @@
   # handhelds. The Poco F1 boots a standard fastboot Android boot image instead.
   # rmtfs/tqftpserv/pd-mapper are the Qualcomm modem/DSP userspace daemons the
   # sdm845 needs for remoteproc firmware loading (ADSP/CDSP/modem).
-    ADDITIONAL_PACKAGES="gamepadcalibration inputplumber pd-mapper rmtfs tqftpserv xpadneo"
+  # NOTE: inputplumber intentionally dropped - it autostarts and takes an
+  # exclusive EVIOCGRAB on controller evdev nodes to re-expose a unified virtual
+  # pad. That's meant for devices with a built-in gamepad; the F1 has none, and
+  # it starves SDL/ES of input from external pads (notably the xpadneo BLE Xbox,
+  # which it grabs but can't map). Without it, ES reads USB/BT pads directly via
+  # SDL + gamecontrollerdb. (The standalone Steam Input thunk is unaffected.)
+    ADDITIONAL_PACKAGES="gamepadcalibration pd-mapper rmtfs tqftpserv xpadneo"
 
-  # 32-bit libretro cores. Distro default is true, but that requires building a
-  # full ARCH=arm pass first (the aarch64 pass copies 32-bit cores from
-  # build.${DISTRO}-${DEVICE}.arm). Disabled for initial bring-up to avoid the
-  # extra pass; re-enable in phase 2 with a proper arm+aarch64 build for the
-  # handful of cores that are 32-bit-only or faster in 32-bit (e.g. pcsx_rearmed).
-    ENABLE_32BIT="false"
+  # 32-bit libretro cores. Requires a full ARCH=arm pass first (the aarch64 pass
+  # copies 32-bit cores from build.${DISTRO}-${DEVICE}.arm). Enabled for parity
+  # with the SM8250/Retroid-Pocket-5 emulator set (pcsx_rearmed, gpsp, box86,
+  # etc. are 32-bit-only or faster in 32-bit). Roughly doubles build time.
+    ENABLE_32BIT="true"
 
   # Debug tty path
     DEBUG_TTY="/dev/ttyMSM0"

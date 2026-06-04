@@ -59,7 +59,46 @@ BIGFONT="1080"
 TEE_PID=""
 
 exec 1>/dev/console
-exec 2>/dev/null
+exec 2>/dev/console
+
+# DEBUG (bring-up): capture the full init trace to the STORAGE partition so it can
+# be read offline from pmOS (the panel blanks at the DRM handoff, no serial). Remove for release.
+_dbg_dev=/dev/sda18   # beryllium 'cust' partition (ext4, untouched by pmOS/Android)
+_dbg_n=0
+while [ ${_dbg_n} -lt 20 ]; do
+  [ -b "${_dbg_dev}" ] && break
+  usleep 1000000 2>/dev/null || sleep 1
+  _dbg_n=$((_dbg_n+1))
+done
+if [ -b "${_dbg_dev}" ]; then
+  mkdir -p /dbg
+  if mount -o sync "${_dbg_dev}" /dbg 2>/dev/null || mount -o sync -t ext4 "${_dbg_dev}" /dbg 2>/dev/null; then
+    echo "=== rocknix-beryllium init trace dev=${_dbg_dev} ===" > /dbg/initlog.txt
+    exec >>/dbg/initlog.txt 2>&1
+    _DBG_ON=yes
+    set -x
+  fi
+fi
+# synced breadcrumb (survives hard watchdog reset; partition mounted -o sync)
+_dbgmark() {
+  [ "${_DBG_ON}" = yes ] || return 0
+  echo "### MARK: $* ###" >>/dbg/initlog.txt
+  sync 2>/dev/null
+}
+# probe (bring-up): dump STORAGE (sda21) sector 0 at the VERY START of init,
+# before any ROCKNIX userspace runs. If byte 0x1fe = 55 aa here, a GPT/partition
+# table was written by the kernel/ABL/pre-init (not ROCKNIX); if it's the ext4
+# boot block (zeros), STORAGE is still clean at init-start and something later
+# in the boot writes the GPT. Raw sector saved to file (bulletproof) + od inline.
+if [ "${_DBG_ON}" = yes ]; then
+  { set +x; } 2>/dev/null
+  dd if=/dev/sda21 bs=512 count=1 of=/dbg/sda21_sector0_initstart.bin 2>/dev/null
+  echo "=== sda21 (STORAGE) sector0 @ INIT-START ===" >>/dbg/initlog.txt
+  dd if=/dev/sda21 bs=512 count=1 2>/dev/null | od -A x -t x1 2>/dev/null | tail -6 >>/dbg/initlog.txt
+  echo "=== (look for 55 aa at offset 1fe = GPT protective MBR) ===" >>/dbg/initlog.txt
+  sync 2>/dev/null
+  set -x 2>/dev/null
+fi
 
 # common functions
 . /functions 2>/dev/null
@@ -93,6 +132,7 @@ error() {
   # $1:action which caused error, $2:message
   # Send debug_shell output to stderr, in case caller is redirecting/consuming stdout
   # Return exitcode=1 so that called may detect when an error has occurred
+  _dbgmark "ERROR in ${BOOT_STEP}: $1: $2"
   echo "*** Error in ${BOOT_STEP}: $1: $2 ***" >&2
   debug_shell >&2
   return 1
@@ -607,34 +647,17 @@ recovery_mode() {
 
 
 force_fsck() {
-  echo "Filesystem corruption has been detected!"
-  echo "To prevent an automatic repair attempt continuing,"
-  echo "press any key or power off your system within the next 120 seconds"
-  echo ""
-  read -t120 -n1
-  # The exit status is 0 if input is available
-  # The exit status is greater than 128 if the timeout is exceeded
-  if [ $? -ne 0 -o $? -gt 128 ]; then
-    echo "Repairing filesystem..."
-    echo ""
-    /usr/sbin/fsck -T -M -y ${RUN_FSCK_DISKS}
-    FSCK_RET=$?
-    if [ $(( ${FSCK_RET} & 8 )) -eq 8 ]; then
-      # fubar
-      echo "Forced fsck failed. Your system is broken beyond repair"
-      echo "Please re-install @DISTRONAME@"
-      echo ""
-      echo "Press enter to shutdown now"
-      echo ""
-      read fubar
-      poweroff
-    fi
-    do_reboot
-  else
-    echo "Shutting down..."
-    sleep 5
-    sync
-    poweroff
+  # Headless handheld: the framebuffer console is blank during early boot and there
+  # is no keyboard, so the original interactive "press any key within 120s" prompt
+  # would just stall until the hardware watchdog reboots -> infinite boot loop.
+  # Instead, auto-repair non-interactively and continue (no prompt, no forced reboot).
+  echo "Filesystem errors left by preen; forcing non-interactive repair..." >/dev/kmsg
+  echo "Repairing filesystem..."
+  /usr/sbin/fsck -T -M -y ${RUN_FSCK_DISKS} >/dev/fsck.latest 2>&1
+  FSCK_RET=$?
+  cat /dev/fsck.latest >>/dev/fsck.log
+  if [ $(( ${FSCK_RET} & 8 )) -eq 8 ]; then
+    echo "fsck: operational error during forced repair, continuing anyway" >/dev/kmsg
   fi
 }
 
@@ -659,8 +682,9 @@ check_disks() {
           usleep 500000
         fi
       elif [ $(( ${FSCK_RET} & 4 )) -eq 4 ]; then
-        # errors left
+        # errors left uncorrected by preen -> auto-repair (non-interactive) and continue
         force_fsck
+        break
       elif [ $(( ${FSCK_RET} & 2 )) -eq 2 ]; then
         # reboot needed
         echo "Filesystem repaired, reboot needed..."
@@ -1307,11 +1331,14 @@ for BOOT_STEP in \
     check_update \
     prepare_sysroot 
 do
+  _dbgmark "STEP enter: ${BOOT_STEP}"
   ${BOOT_STEP}
+  _dbgmark "STEP done:  ${BOOT_STEP} (rc=$?)"
   [ -n "${DEBUG}" ] && break_after ${BOOT_STEP}
 done
 
 BOOT_STEP=final
+_dbgmark "reached BOOT_STEP=final (all loop steps passed)"
 
 # log if booting from usb / removable storage
 STORAGE=$(cat /proc/mounts | grep " /sysroot/storage " 2>/dev/null | awk '{print $1}' | awk -F '/' '{print $3}')
@@ -1334,8 +1361,10 @@ done
 /usr/bin/busybox mount --move /run /sysroot/run
 /usr/bin/busybox rm -fr /tmp
 
+_dbgmark "post-loop: moved special fs into /sysroot; about to run kernel-overlays-setup"
 # setup kernel overlays
 /usr/bin/busybox chroot /sysroot /usr/sbin/kernel-overlays-setup
+_dbgmark "kernel-overlays-setup returned rc=$?"
 
 # tell OE settings addon to disable updates
 if [ "${UPDATE_DISABLED}" = "yes" ]; then
@@ -1375,6 +1404,7 @@ else
 fi
 
 # switch to new sysroot and start real init
+_dbgmark "ABOUT TO switch_root -> systemd ${INIT_ARGS} ${INIT_UNIT} (if log stops here, failure is in systemd/userspace)"
 exec /usr/bin/busybox switch_root /sysroot /usr/lib/systemd/systemd ${INIT_ARGS} ${INIT_UNIT}
 
 error "switch_root" "Error in initramfs. Could not switch to new root"

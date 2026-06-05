@@ -82,11 +82,13 @@
   # SDL + gamecontrollerdb. (The standalone Steam Input thunk is unaffected.)
     ADDITIONAL_PACKAGES="gamepadcalibration pd-mapper rmtfs tqftpserv xpadneo"
 
-  # 32-bit libretro cores. Requires a full ARCH=arm pass first (the aarch64 pass
-  # copies 32-bit cores from build.${DISTRO}-${DEVICE}.arm). Enabled for parity
-  # with the SM8250/Retroid-Pocket-5 emulator set (pcsx_rearmed, gpsp, box86,
-  # etc. are 32-bit-only or faster in 32-bit). Roughly doubles build time.
-    ENABLE_32BIT="true"
+  # 32-bit libretro cores. Disabled: nothing here needs an ARCH=arm pass.
+  # PS1 (pcsx_rearmed/beetle-psx/swanstation), GBA (mGBA/nanoboyadvance), DS
+  # (melonDS), N64 (mupen64plus) all have 64-bit cores already in the set, and
+  # FEX emulates BOTH 32 and 64-bit x86 so box86 is redundant for Steam. The arm
+  # pass also broke on this kernel's dropped uapi headers (linux/scc.h) + lib32
+  # sysroot merges. Re-enable later only if a 32-bit-only core is actually wanted.
+    ENABLE_32BIT="false"
 
   # Debug tty path
     DEBUG_TTY="/dev/ttyMSM0"

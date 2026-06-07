@@ -22,10 +22,10 @@ built as a handheld emulation + Steam device.
   Steam), and the **Quick Access Menu** wirelessly (Guide + A).
 
 ## Known issues
-- **WiFi MAC / IP wanders across reboots.** machine-id is now stable, but
-  NetworkManager isn't honoring the intended stable MAC (and `/var` is tmpfs), so
-  DHCP may hand out a different IP each boot. Find the device by scanning your LAN
-  or checking your router. *(Fix in progress.)*
+- **WiFi MAC / IP changes across reboots.** The WCN3990 has no fused MAC, so the
+  `ath10k` driver assigns a random one each boot - and it ignores MAC changes from
+  userspace (NetworkManager, `ip link`), so there is no userspace fix. Find the
+  device by scanning your LAN or checking your router.
 - No modem / telephony (this is a gaming build).
 
 ## Prebuilt images

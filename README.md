@@ -1,31 +1,141 @@
-# Unofficial ROCKNIX port for the Poco F1 (beryllium-ebbg)
+# Unofficial ROCKNIX port - Xiaomi Poco F1 (beryllium, EBBG)
 
-**Built for personal use.** This is an unofficial ROCKNIX device port for the
-Xiaomi Poco F1 (codename *beryllium*, EBBG panel variant / Snapdragon 845).
+**Personal, experimental, unofficial.** A ROCKNIX device port for the Xiaomi
+Poco F1 (codename *beryllium*, **EBBG panel only**, Snapdragon 845 / Adreno 630),
+built as a handheld emulation + Steam device.
 
-### How it was built
-This port was developed almost entirely using **agentic AI (Claude Opus 4.8)** —
-the device target, kernel configuration, build fixes, and bring-up were driven
-through an AI coding agent. It's an experiment as much as a device port.
+> **Disclaimer:** This port was built with the help of an agentic AI coding agent
+> (**Claude Opus 4.8**). My background is fullstack web development. I'm comfortable
+> with Linux distributions and the kernel but I'm not a systems or kernel developer,
+> so for this personal, non-commercial project I leaned on AI to bridge that gap and
+> get ROCKNIX running on my own device.
 
-### Scope & support
-- **Personal project, no support.** Built for my own device and use case; issues
-  and PRs may go unanswered, and there are no guarantees it works for you.
-- **EBBG panel only.** I have **no intention of supporting the Tianma panel
-  variant or any other sdm845 device** (OnePlus 6/6T, Mi 8, etc.).
-- **…but feel free to reuse anything.** The `SDM845` target is structured as a
-  generic sdm845 platform — if you want to add the Tianma panel or another
-  sdm845 device, take whatever is useful from this fork.
+## What works
+- Boots to EmulationStation; landscape display, GPU (Adreno 630 via freedreno +
+  turnip), storage, WiFi, Bluetooth, battery, suspend, USB host.
+- **Emulators** - the SM8250 / Retroid Pocket 5 set (standalone like Dolphin,
+  AetherSX2, Azahar, melonDS, Supermodel, plus the libretro cores), **minus the
+  heaviest standalone cores** that can't run usefully on this SoC: PS3 (RPCS3),
+  Wii U (Cemu), original Xbox (xemu), and PS Vita (vita3k).
+- **Steam** via FEX (x86→ARM emulation) + Proton, under gamescope (Steam Deck UI).
+- **Audio** (speaker + headphones), **Bluetooth Xbox controller** (in ES and
+  Steam), and the **Quick Access Menu** wirelessly (Guide + A).
 
-### Firmware
-Proprietary per-device firmware (DSP/GPU blobs) is **not included** and is
-gitignored — extract it from your own device (see the firmware README under
-`projects/ROCKNIX/devices/SDM845/`).
+## Known issues
+- **WiFi MAC / IP wanders across reboots.** machine-id is now stable, but
+  NetworkManager isn't honoring the intended stable MAC (and `/var` is tmpfs), so
+  DHCP may hand out a different IP each boot. Find the device by scanning your LAN
+  or checking your router. *(Fix in progress.)*
+- No modem / telephony (this is a gaming build).
 
-*Not affiliated with or endorsed by the ROCKNIX project. A more detailed
-technical write-up will be added once the port boots.*
+## Prebuilt images
+Prebuilt **boot + system + storage** images are attached to [Releases](../../releases).
+Flash them directly (see *Flashing* below) - no build required. To build your own
+instead, read on.
+
+## Building from source
+Requires Docker (the build runs in the ROCKNIX builder container):
+```
+make docker-SDM845 DOCKER_WORK_DIR=/work
+```
+- **`DOCKER_WORK_DIR=/work` is required** - the toolchain bakes `/work` into
+  binary RUNPATHs, so the repo must be mounted there. Omitting it mounts the host
+  path and the build fails while sourcing config.
+- 64-bit only (`ENABLE_32BIT=false`); a full build needs a large build tree
+  (~100 GB+ of disk).
+- Output lands in `target/`: `ROCKNIX-SDM845.aarch64-<date>.tar` (contains
+  `KERNEL` = the boot image and `SYSTEM` = the root squashfs) and a full
+  `….img.gz` disk image.
+
+## Firmware (you must supply your own)
+The proprietary per-device DSP/modem firmware (`adsp.mbn`, `cdsp.mbn`,
+`modem.mbn`, `slpi.mbn`, `venus.mbn`, …) is **not redistributable** and is **not
+included** (gitignored). Before building, extract it from *your own* device into:
+```
+projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/beryllium/
+```
+Get the blobs from your device's `/vendor/firmware*` or a postmarketOS beryllium
+install - see `beryllium-FIRMWARE-README.md` beside that directory. The
+redistributable Adreno 630 GPU microcode (`a630_*`) **is** included.
+
+## Flashing
+The Poco F1 boots a standard fastboot Android boot image (no signed ABL). Get the
+images either from [Releases](../../releases) (extract the compressed ones first),
+or from your own build output (in `target/`: the boot image is `KERNEL` inside the
+`.tar`; `system` and `storage` are partitions 1 and 2 of the `.img.gz`).
+
+**First install** flashes three images - `boot`, `system`, and `storage`. With the
+phone in fastboot:
+```
+fastboot flash boot     boot.img
+fastboot flash system   system.img
+fastboot flash userdata storage.img
+fastboot reboot
+```
+`storage.img` is an ext4 `STORAGE` filesystem that auto-resizes to fill the
+partition on first boot. (If the device loops at boot, clear `userdata`'s
+partition table and reflash it.)
+
+**Updating** an existing install flashes only `boot` + `system` - leave
+`userdata` untouched so Steam, your config, and games persist:
+```
+fastboot flash boot   boot.img
+fastboot flash system system.img
+fastboot reboot
+```
+
+## No OTA / online updates
+The in-OS "System Update" is **disabled** on this build - the ROCKNIX update
+server has no images for an unofficial device, and an OTA would flash a stock
+image that won't boot here and wipes the device-specific fixes. **Update only by
+fastboot-reflashing a new build** (boot + system; keep `userdata`).
+
+## Steam
+After flashing, run **Install Steam** from the menu - it downloads the Steam
+client, the FEX x86 rootfs, and Proton to `/storage` (~6 GB, one-time, requires
+your Steam login).
+
+## Performance tips (Steam / FEX)
+x86 games run under FEX emulation, feeding the Adreno GPU through a Vulkan thunk -
+so the rendering path matters a lot:
+- **OpenGL games are slow by default** (Mesa falls back to software under FEX).
+  For a native-Linux GL game, set the launch option
+  `MESA_LOADER_DRIVER_OVERRIDE=zink %command%` to route GL → Vulkan → GPU.
+- **For an OpenGL game, the Windows build via Proton is often *faster*** than the
+  native Linux build - D3D → DXVK → Vulkan avoids the emulated GL driver entirely.
+- **The build pins Steam/FEX to the 4 big A75 cores** for steadier frametimes. Note
+  the ceiling for emulated x86 *GL* games is FEX/thunk latency, not raw GPU power.
+- **Charge with a direct charger, not a USB hub/dock.** A dock enumerates as a
+  500 mA data port and can't keep up with gaming; a direct charger negotiates
+  ~1.5 A. (Mainline has no Quick Charge, so heavy games may still slowly drain.)
+
+## Kernel
+Uses the **sdm845-mainline** community kernel (`sdm845-7.1-rc1-r0`, the newest
+tag) - pure mainline does not boot beryllium reliably. If you hit kernel
+instability, `sdm845-6.16.7-r0` is the more conservative kernel postmarketOS
+ships.
+
+## Credits
+This port stands on the work of others:
+- **[sdm845-mainline](https://gitlab.com/sdm845-mainline)** - the kernel
+  (`linux`) and the beryllium ALSA UCM profile (`alsa-ucm-conf`).
+- **[postmarketOS / pmaports](https://gitlab.postmarketos.org/postmarketOS/pmaports)**
+  - device bring-up reference (kernel config, device tree, firmware packaging).
+- **[ROCKNIX](https://github.com/ROCKNIX/distribution)** and its upstream
+  **[JELOS](https://github.com/JustEnoughLinuxOS)** - the base distribution.
+- xpadneo, FEX, Proton-CachyOS, gamescope, and the wider open-source community.
+
+## Scope & support
+- **Personal project, no support.** Issues and PRs may go unanswered; no
+  guarantees it works for you.
+- **EBBG panel only.** No plans to support the Tianma variant or other sdm845
+  devices - but the `SDM845` target is structured as a generic sdm845 platform,
+  so take whatever is useful.
+- Not affiliated with or endorsed by the ROCKNIX project.
 
 ---
+
+## Original README
 
 <img src="https://github.com/ROCKNIX/distribution/blob/next/distributions/ROCKNIX/logos/rocknix-logo.png?raw=yes" width=192>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Latest Version](https://img.shields.io/github/release/ROCKNIX/distribution.svg?color=FF5555&label=latest%20version&style=flat-square)](https://github.com/ROCKNIX/distribution/releases/latest) [![Activity](https://img.shields.io/github/commit-activity/m/ROCKNIX/distribution?color=FF5555&style=flat-square)](https://github.com/ROCKNIX/distribution/commits) [![Pull Requests](https://img.shields.io/github/issues-pr-closed/ROCKNIX/distribution?color=FF5555&style=flat-square)](https://github.com/ROCKNIX/distribution/pulls) [![Discord Server](https://img.shields.io/discord/948029830325235753?color=FF5555&label=chat&style=flat-square)](https://discord.gg/seTxckZjJy)
 

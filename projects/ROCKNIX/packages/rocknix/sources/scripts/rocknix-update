@@ -4,6 +4,18 @@
 
 . /etc/profile
 
+# SDM845/beryllium is an UNOFFICIAL fork device. The ROCKNIX update server has no
+# images for it, and an OTA would otherwise flash a stock image with no SDM845
+# kernel/dtb/firmware (and a different boot path) -> non-bootable, plus it wipes
+# the fork's device fixes. Updates on this build are MANUAL fastboot reflashes only.
+# Make every OTA operation a safe no-op (and report "no update" so the UI is clean).
+if [ "${HW_DEVICE}" = "SDM845" ]; then
+    case "${1:-}" in
+        check)    echo "No update available." ; exit 1 ;;
+        *)        echo "Online (OTA) updates are disabled on this build. Update by reflashing a new image via fastboot." ; exit 0 ;;
+    esac
+fi
+
 BRANCH="$(get_setting updates.branch)"
 FORCE="$(get_setting updates.force)"
 

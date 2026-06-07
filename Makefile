@@ -34,6 +34,12 @@ kconfig-olddefconfig-%:
 kconfig-menuconfig-%:
 	DEVICE=$* ./tools/adjust_kernel_config menuconfig
 
+# SDM845 (Xiaomi Poco F1 / beryllium) - unofficial fork target.
+# 64-bit only (ENABLE_32BIT=false in devices/SDM845/options), so no ARM pass.
+SDM845:
+	unset DEVICE_ROOT
+	PROJECT=ROCKNIX DEVICE=SDM845 ARCH=aarch64 ./scripts/build_distro
+
 RK3588:
 	unset DEVICE_ROOT
 	PROJECT=ROCKNIX DEVICE=RK3588 ARCH=arm ./scripts/build_distro

@@ -1,0 +1,13 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2024 ROCKNIX (https://github.com/ROCKNIX)
+
+# SDM845 (Snapdragon 845): cpu0-3 = Kryo 385 Silver (Cortex-A55, little),
+# cpu4-7 = Kryo 385 Gold (Cortex-A75, big). Pin perf workloads (FEX/Steam,
+# emulators) to the big cluster only - keeps the hot, lightly-threaded
+# emulation thread off the ~40% slower A55s and stops cross-cluster migration
+# hitches (the Tegra-X1/Switch model: use the strong 4, ignore the little 4).
+cat <<EOF >/storage/.config/profile.d/040-affinity
+SLOW_CORES="taskset -c 0-3"
+FAST_CORES="taskset -c 4-7"
+EOF

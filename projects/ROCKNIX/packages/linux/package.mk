@@ -370,9 +370,14 @@ makeinstall_target() {
       fi
     done
     echo -n "dummy" > "${INSTALL}/.image/ramdisk"
+    # Boot image geometry. beryllium's ABL requires specific load offsets and 4K
+    # pages (verified by byte-diffing pmOS's working boot.img); mkbootimg's
+    # defaults (base 0x10000000, 2048-byte pages) are rejected / mis-loaded by it.
+    MKBOOT_GEOMETRY="--kernel_offset 0x00000000 --ramdisk_offset 0x00000000 --tags_offset 0x00000000"
+    [ "${DEVICE}" = "SDM845" ] && MKBOOT_GEOMETRY="--base 0x00000000 --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 --pagesize 4096"
     python3 "${TOOLCHAIN}/mkbootimg/mkbootimg.py" \
       --kernel "${INSTALL}/.image/kernel.gz" --ramdisk "${INSTALL}/.image/ramdisk" \
-	  --kernel_offset 0x00000000 --ramdisk_offset 0x00000000 --tags_offset 0x00000000 \
+	  ${MKBOOT_GEOMETRY} \
 	  --os_version 12.0.0 --os_patch_level "$(date '+%Y-%m')" --header_version 0 \
 	  --cmdline "boot=LABEL=${DISTRO_BOOTLABEL} disk=LABEL=${DISTRO_DISKLABEL} ${EXTRA_CMDLINE}" \
 	  -o "${INSTALL}/.image/${KERNEL_TARGET}" || { exit 1; }

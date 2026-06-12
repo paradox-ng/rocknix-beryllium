@@ -39,7 +39,9 @@ differ, but treat it as experimental.
   AetherSX2, Azahar, melonDS, Supermodel, plus the libretro cores), **minus the
   heaviest standalone cores** that can't run usefully on this SoC: PS3 (RPCS3),
   Wii U (Cemu), original Xbox (xemu), and PS Vita (vita3k).
-- **Steam** via FEX (x86→ARM emulation) + Proton, under gamescope (Steam Deck UI).
+- **Steam** - the Steam client itself runs **natively on ARM**; only the x86 /
+  x86-64 games run under FEX emulation (+ Proton for Windows titles), composited by
+  gamescope (Steam Deck UI).
 - **Audio** - headphone jack at full volume; the built-in speaker works
   (TAS2559/2560 smart-amp firmware loads at boot) but plays quieter than stock
   (see *Known issues*). **Bluetooth Xbox controller** (in ES and Steam), and the

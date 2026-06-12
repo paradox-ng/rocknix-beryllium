@@ -10,6 +10,21 @@ built as a handheld emulation + Steam device.
 > so for this personal, non-commercial project I leaned on AI to bridge that gap and
 > get ROCKNIX running on my own device.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="readme_pictures/rocknix-boot.jpg" width="240"><br><sub>Booting ROCKNIX</sub></td>
+    <td align="center"><img src="readme_pictures/emulationstation-steam.jpg" width="240"><br><sub>EmulationStation (Steam system)</sub></td>
+    <td align="center"><img src="readme_pictures/steam-gamescope.jpg" width="240"><br><sub>Steam under gamescope</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="readme_pictures/steam-gamescope-overlay.jpg" width="240"><br><sub>In-game: Quick Access Menu + MangoHud</sub></td>
+    <td align="center"><img src="readme_pictures/portmaster.jpg" width="240"><br><sub>PortMaster</sub></td>
+    <td></td>
+  </tr>
+</table>
+
 ## What works
 - Boots to EmulationStation; landscape display, GPU (Adreno 630 via freedreno +
   turnip), storage, WiFi, Bluetooth, battery, suspend, USB host.
@@ -55,7 +70,7 @@ included** (gitignored). Before building, extract it from *your own* device into
 projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/beryllium/
 ```
 Get the blobs from your device's `/vendor/firmware*` or a postmarketOS beryllium
-install - see `beryllium-FIRMWARE-README.md` beside that directory. The
+install - see [`beryllium-FIRMWARE-README.md`](projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/beryllium-FIRMWARE-README.md) beside that directory. The
 redistributable Adreno 630 GPU microcode (`a630_*`) **is** included.
 
 ## Flashing
@@ -110,19 +125,24 @@ so the rendering path matters a lot:
   ~1.5 A. (Mainline has no Quick Charge, so heavy games may still slowly drain.)
 
 ## Kernel
-Uses the **sdm845-mainline** community kernel (`sdm845-7.1-rc1-r0`, the newest
-tag) - pure mainline does not boot beryllium reliably. If you hit kernel
-instability, `sdm845-6.16.7-r0` is the more conservative kernel postmarketOS
-ships.
+The kernel is fetched **directly** from the
+[`sdm845-mainline/linux`](https://gitlab.com/sdm845-mainline/linux) repo at tag
+[`sdm845-7.1-rc1-r0`](https://gitlab.com/sdm845-mainline/linux/-/tree/sdm845-7.1-rc1-r0)
+(its newest tag; pure mainline does not boot beryllium reliably for this use case). Note this is
+the kernel *source* - it's the same tree the postmarketOS `pmaports` recipe
+points to, just pulled directly rather than through pmaports' build. If you hit
+kernel instability, `sdm845-6.16.7-r0` is the more conservative kernel
+postmarketOS ships.
 
 ## Credits
 This port stands on the work of others:
 - **[sdm845-mainline](https://gitlab.com/sdm845-mainline)** - the kernel
-  (`linux`) and the beryllium ALSA UCM profile (`alsa-ucm-conf`).
+  ([`sdm845-mainline/linux`](https://gitlab.com/sdm845-mainline/linux), tag
+  `sdm845-7.1-rc1-r0`, fetched directly) and the beryllium ALSA UCM profile
+  ([`sdm845-mainline/alsa-ucm-conf`](https://gitlab.com/sdm845-mainline/alsa-ucm-conf)).
 - **[postmarketOS / pmaports](https://gitlab.postmarketos.org/postmarketOS/pmaports)**
   - device bring-up reference (kernel config, device tree, firmware packaging).
-- **[ROCKNIX](https://github.com/ROCKNIX/distribution)** and its upstream
-  **[JELOS](https://github.com/JustEnoughLinuxOS)** - the base distribution.
+- **[ROCKNIX](https://github.com/ROCKNIX/distribution)** - the base distribution.
 - xpadneo, FEX, Proton-CachyOS, gamescope, and the wider open-source community.
 
 ## Scope & support

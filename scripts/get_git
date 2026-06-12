@@ -82,8 +82,24 @@ _update_submodules() {
       git submodule update --init --recursive ${GIT_SUBMODULE_PARAMS} -- "${submodule}"
       _rv=$?
       if [[ $_rv != 0 ]] ; then
-        echo "Failed to reinitialize submodule: $submodule"
-        return 1
+        # Final fallback: the pinned commit can be a non-tip fork commit that a
+        # shallow / direct-SHA fetch cannot retrieve (git reports "not our ref").
+        # Do a full, all-branches clone of just this submodule and check out the
+        # exact commit the superproject pins. Fixes e.g. gamescope's wlroots fork.
+        echo "Direct fetch failed; full-clone fallback for submodule: $submodule"
+        local _sub_url _sub_sha
+        _sub_url=$(git config --file .gitmodules --get "submodule.${submodule}.url")
+        _sub_sha=$(git ls-tree HEAD "${submodule}" | awk '{ print $3 }')
+        rm -rf "${submodule}"
+        if [[ -n "${_sub_url}" && -n "${_sub_sha}" ]] \
+             && git clone "${_sub_url}" "${submodule}" \
+             && git -C "${submodule}" checkout "${_sub_sha}"; then
+          git -C "${submodule}" submodule update --init --recursive 2>/dev/null || true
+          echo "Recovered submodule ${submodule} at ${_sub_sha} via full clone."
+        else
+          echo "Failed to reinitialize submodule: $submodule"
+          return 1
+        fi
       fi
     fi
     

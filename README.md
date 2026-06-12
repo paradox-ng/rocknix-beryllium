@@ -1,8 +1,15 @@
-# Unofficial ROCKNIX port - Xiaomi Poco F1 (beryllium, EBBG)
+# Unofficial ROCKNIX port - Xiaomi Poco F1 (beryllium, EBBG + Tianma)
 
 **Personal, experimental, unofficial.** A ROCKNIX device port for the Xiaomi
-Poco F1 (codename *beryllium*, **EBBG panel only**, Snapdragon 845 / Adreno 630),
-built as a handheld emulation + Steam device.
+Poco F1 (codename *beryllium*, Snapdragon 845 / Adreno 630), built as a handheld
+emulation + Steam device.
+
+The Poco F1 shipped with one of two display panels (EBBG or Tianma). This fork
+builds a boot image for **both** - flash the one matching your unit (see
+*Flashing*). The **EBBG** variant is what I develop and test on; the **Tianma**
+variant is built from the same shared device tree but is **untested** (I don't
+have that panel) - it should work since only the panel and touch controller
+differ, but treat it as experimental.
 
 > **Disclaimer:** This port was built with the help of an agentic AI coding agent
 > (**Claude Opus 4.8**). My background is fullstack web development. I'm comfortable
@@ -33,20 +40,35 @@ built as a handheld emulation + Steam device.
   heaviest standalone cores** that can't run usefully on this SoC: PS3 (RPCS3),
   Wii U (Cemu), original Xbox (xemu), and PS Vita (vita3k).
 - **Steam** via FEX (x86→ARM emulation) + Proton, under gamescope (Steam Deck UI).
-- **Audio** (speaker + headphones), **Bluetooth Xbox controller** (in ES and
-  Steam), and the **Quick Access Menu** wirelessly (Guide + A).
+- **Audio** - headphone jack at full volume; the built-in speaker works
+  (TAS2559/2560 smart-amp firmware loads at boot) but plays quieter than stock
+  (see *Known issues*). **Bluetooth Xbox controller** (in ES and Steam), and the
+  **Quick Access Menu** wirelessly (Guide + A).
 
 ## Known issues
 - **WiFi MAC / IP changes across reboots.** The WCN3990 has no fused MAC, so the
   `ath10k` driver assigns a random one each boot - and it ignores MAC changes from
   userspace (NetworkManager, `ip link`), so there is no userspace fix. Find the
   device by scanning your LAN or checking your router.
+- **Some WiFi 5 GHz channels are unavailable** (a mainline `ath10k` limitation).
+  The driver restricts the 5 GHz band so channels 100-144 are disabled; 36-64 and
+  149-165 work fine (Android's proprietary WiFi driver didn't have this limit). If
+  your router's 5 GHz is on auto and lands in 100-144, the phone won't see that
+  network.
+- **Speaker is quiet.** The loudspeaker works but is noticeably quieter than
+  stock. Everything user-facing is already maxed; the limit is the mainline
+  driver loading the amp's "Tuning Mode" firmware program instead of a
+  full-boost production one. Headphones give full volume. Loudness tuning is
+  ongoing.
+- **Tianma panel untested.** The Tianma boot image is built but unverified (no
+  hardware) - see the note at the top.
 - No modem / telephony (this is a gaming build).
 
 ## Prebuilt images
-Prebuilt **boot + system + storage** images are attached to [Releases](../../releases).
-Flash them directly (see *Flashing* below) - no build required. To build your own
-instead, read on.
+Each release attaches **two boot images** (`boot-ebbg.img` and `boot-tianma.img`,
+one per panel) plus a shared **system** and **storage** image - see
+[Releases](../../releases). Flash the boot image for your panel (see *Flashing*
+below) - no build required. To build your own instead, read on.
 
 ## Building from source
 Requires Docker (the build runs in the ROCKNIX builder container):
@@ -59,8 +81,12 @@ make docker-SDM845 DOCKER_WORK_DIR=/work
 - 64-bit only (`ENABLE_32BIT=false`); a full build needs a large build tree
   (~100 GB+ of disk).
 - Output lands in `target/`: `ROCKNIX-SDM845.aarch64-<date>.tar` (contains
-  `KERNEL` = the boot image and `SYSTEM` = the root squashfs) and a full
-  `….img.gz` disk image.
+  `KERNEL` = the **EBBG** boot image and `SYSTEM` = the root squashfs) and a full
+  `….img.gz` disk image (partition 1 = `system`, partition 2 = `storage`).
+- The default build produces the **EBBG** boot image. The kernel tree also builds
+  `sdm845-xiaomi-beryllium-tianma.dtb`; the **Tianma** boot image is the same
+  `gzip(Image)` + that dtb, repacked with the identical `mkbootimg` geometry. The
+  prebuilt releases include both.
 
 ## Firmware (you must supply your own)
 The proprietary per-device DSP/modem firmware (`adsp.mbn`, `cdsp.mbn`,
@@ -79,10 +105,15 @@ images either from [Releases](../../releases) (extract the compressed ones first
 or from your own build output (in `target/`: the boot image is `KERNEL` inside the
 `.tar`; `system` and `storage` are partitions 1 and 2 of the `.img.gz`).
 
+**Pick the boot image for your panel:** `boot-ebbg.img` or `boot-tianma.img`. If
+you don't know which panel your unit has, flash one and boot - if the display stays
+black, it's the other panel, so reflash `boot` with the other image. The `system`
+and `storage` images are identical for both panels.
+
 **First install** flashes three images - `boot`, `system`, and `storage`. With the
-phone in fastboot:
+phone in fastboot (substitute your panel's boot image):
 ```
-fastboot flash boot     boot.img
+fastboot flash boot     boot-ebbg.img      # or boot-tianma.img
 fastboot flash system   system.img
 fastboot flash userdata storage.img
 fastboot reboot
@@ -94,7 +125,7 @@ partition table and reflash it.)
 **Updating** an existing install flashes only `boot` + `system` - leave
 `userdata` untouched so Steam, your config, and games persist:
 ```
-fastboot flash boot   boot.img
+fastboot flash boot   boot-ebbg.img        # or boot-tianma.img
 fastboot flash system system.img
 fastboot reboot
 ```
@@ -148,9 +179,9 @@ This port stands on the work of others:
 ## Scope & support
 - **Personal project, no support.** Issues and PRs may go unanswered; no
   guarantees it works for you.
-- **EBBG panel only.** No plans to support the Tianma variant or other sdm845
-  devices - but the `SDM845` target is structured as a generic sdm845 platform,
-  so take whatever is useful.
+- **EBBG + Tianma panels.** Both boot images are built; EBBG is tested, Tianma is
+  built-but-unverified. The `SDM845` target is structured as a generic sdm845
+  platform, so take whatever is useful for other sdm845 devices too.
 - Not affiliated with or endorsed by the ROCKNIX project.
 
 ---

@@ -15,6 +15,12 @@ set_kill set "-9 FEX"
 performance
 trap ondemand EXIT
 
+# Route OpenGL games through zink (GL -> Vulkan -> turnip) instead of the
+# llvmpipe software fallback, which is unusably slow under FEX. Only affects
+# native-GL games; Vulkan-native and Proton/DXVK games ignore it. Override
+# per-game with a launch option if a title glitches under zink.
+export MESA_LOADER_DRIVER_OVERRIDE=zink
+
 # shellcheck source=start_steam.sh
 . /usr/bin/start_steam.sh
 

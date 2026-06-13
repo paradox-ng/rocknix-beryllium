@@ -146,11 +146,16 @@ your Steam login).
 ## Performance tips (Steam / FEX)
 x86 games run under FEX emulation, feeding the Adreno GPU through a Vulkan thunk -
 so the rendering path matters a lot:
-- **OpenGL games are slow by default** (Mesa falls back to software under FEX).
-  For a native-Linux GL game, set the launch option
-  `MESA_LOADER_DRIVER_OVERRIDE=zink %command%` to route GL → Vulkan → GPU.
-- **For an OpenGL game, the Windows build via Proton is often *faster*** than the
-  native Linux build - D3D → DXVK → Vulkan avoids the emulated GL driver entirely.
+- **OpenGL games default to zink** (GL → Vulkan → GPU). Without it, x86 Mesa under
+  FEX falls back to llvmpipe (software) and is unusably slow, so the Steam launcher
+  sets `MESA_LOADER_DRIVER_OVERRIDE=zink` for you. It only affects native-GL games
+  (Vulkan and Proton/DXVK titles ignore it). If a game glitches under zink, override
+  it per-game with a launch option, e.g. `MESA_LOADER_DRIVER_OVERRIDE=llvmpipe %command%`.
+- **Match the path to the engine.** For a **D3D-native engine** (Source - HL2,
+  Portal, L4D), the **Windows build via Proton** is usually fastest: D3D → DXVK →
+  Vulkan is one clean hop, vs the native Linux port's D3D→GL→zink double-translation.
+  For a **GL-native engine** (GoldSrc/Quake-derived, many indies), the **native
+  build + zink** wins (one hop, no Wine). When unsure, A/B the two.
 - **Lower the render resolution for demanding games.** The panel is **2246×1080**
   (~2.4 MP) - large for the Adreno 630 to fill, so GPU-heavy titles (even 2D ones,
   which have lots of transparent overdraw) can be fragment-bound at native res.

@@ -97,9 +97,21 @@ included** (gitignored). Before building, extract it from *your own* device into
 ```
 projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/beryllium/
 ```
-Get the blobs from your device's `/vendor/firmware*` or a postmarketOS beryllium
-install - see [`beryllium-FIRMWARE-README.md`](projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/beryllium-FIRMWARE-README.md) beside that directory. The
-redistributable Adreno 630 GPU microcode (`a630_*`) **is** included.
+You can either **extract them from your own F1** (the clean way - `/vendor/firmware*`
+or a postmarketOS install), or grab a **prebuilt bundle** for convenience:
+
+- **Bundle:** download `beryllium-firmware.tar.gz` from
+  [Mega](https://mega.nz/file/8IsFmZwI#qRJYJFSSnQnTBvsjLTdVdoiLWqRWhvVpEg20Lspgb2o)
+  and extract it from the repo root:
+  ```
+  tar xzf beryllium-firmware.tar.gz -C projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/
+  ```
+  (These blobs are Qualcomm/Xiaomi/TI's property, not mine - provided only so you
+  can build the image for hardware you own.)
+
+See [`beryllium-FIRMWARE-README.md`](projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/qcom/sdm845/Xiaomi/beryllium-FIRMWARE-README.md)
+for the full list and the TAS2559 speaker files. The redistributable Adreno 630 GPU
+microcode (`a630_*`) **is** already included.
 
 ## Flashing
 The Poco F1 boots a standard fastboot Android boot image (no signed ABL). Get the

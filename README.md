@@ -1,4 +1,4 @@
-# Unofficial ROCKNIX port - Xiaomi Poco F1 (beryllium, EBBG + Tianma)
+# Unofficial ROCKNIX port - Xiaomi Poco F1 (beryllium)
 
 **Personal, experimental, unofficial.** A ROCKNIX device port for the Xiaomi
 Poco F1 (codename *beryllium*, Snapdragon 845 / Adreno 630), built as a handheld
@@ -50,18 +50,17 @@ differ, but treat it as experimental.
 ## Known issues
 - **WiFi MAC / IP changes across reboots.** The WCN3990 has no fused MAC, so the
   `ath10k` driver assigns a random one each boot - and it ignores MAC changes from
-  userspace (NetworkManager, `ip link`), so there is no userspace fix. Find the
-  device by scanning your LAN or checking your router.
-- **Some WiFi 5 GHz channels are unavailable** (a mainline `ath10k` limitation).
-  The driver restricts the 5 GHz band so channels 100-144 are disabled; 36-64 and
-  149-165 work fine (Android's proprietary WiFi driver didn't have this limit). If
-  your router's 5 GHz is on auto and lands in 100-144, the phone won't see that
-  network.
+  userspace (NetworkManager, `ip link`), so there is no userspace fix. Find its
+  IP in EmulationStation's network settings, or by scanning your LAN / checking
+  your router.
 - **Speaker is quiet.** The loudspeaker works but is noticeably quieter than
   stock. Everything user-facing is already maxed; the limit is the mainline
   driver loading the amp's "Tuning Mode" firmware program instead of a
   full-boost production one. Headphones give full volume. Loudness tuning is
   ongoing.
+- **No idle screen-off yet.** The display stays on while EmulationStation is up
+  (it holds a Wayland idle-inhibitor); press the power button to suspend. A proper
+  idle screen-off is planned.
 - **Tianma panel untested.** The Tianma boot image is built but unverified (no
   hardware) - see the note at the top.
 - No modem / telephony (this is a gaming build).

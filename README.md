@@ -46,6 +46,8 @@ differ, but treat it as experimental.
   (TAS2559/2560 smart-amp firmware loads at boot) but plays quieter than stock
   (see *Known issues*). **Bluetooth Xbox controller** (in ES and Steam), and the
   **Quick Access Menu** wirelessly (Guide + A).
+- **Idle screen-off** - the panel powers off after 5 minutes with no input
+  (key, touch, or controller) and wakes on any input.
 
 ## Known issues
 - **WiFi MAC / IP changes across reboots.** The WCN3990 has no fused MAC, so the
@@ -53,14 +55,13 @@ differ, but treat it as experimental.
   userspace (NetworkManager, `ip link`), so there is no userspace fix. Find its
   IP in EmulationStation's network settings, or by scanning your LAN / checking
   your router.
-- **Speaker is quiet.** The loudspeaker works but is noticeably quieter than
-  stock. Everything user-facing is already maxed; the limit is the mainline
-  driver loading the amp's "Tuning Mode" firmware program instead of a
-  full-boost production one. Headphones give full volume. Loudness tuning is
-  ongoing.
-- **No idle screen-off yet.** The display stays on while EmulationStation is up
-  (it holds a Wayland idle-inhibitor); press the power button to suspend. A proper
-  idle screen-off is planned.
+- **Speaker is quiet (known limitation).** The loudspeaker works but plays
+  quieter than stock. This is a limitation of the mainline TAS2559 smart-amp
+  driver, which doesn't program the amp's boost voltage (the driver is a known
+  rough port still pending a rewrite upstream); postmarketOS has the same
+  limitation. Everything user-facing is already maxed. Headphones give full
+  volume. Fixing it properly needs a driver-level boost/calibration port, so
+  it's left as-is for now.
 - **Tianma panel untested.** The Tianma boot image is built but unverified (no
   hardware) - see the note at the top.
 - No modem / telephony (this is a gaming build).

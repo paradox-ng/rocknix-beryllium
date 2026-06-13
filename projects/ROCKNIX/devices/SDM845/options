@@ -29,7 +29,12 @@
     KERNEL_MAKE_EXTRACMD=" $(get_kernel_make_extracmd)"
 
   # Kernel cmdline
-    EXTRA_CMDLINE="rootwait quiet video=efifb:off console=tty0"
+  # fbcon=rotate:3 rotates ONLY the early-boot console text to landscape (the
+  # panel is portrait-native). Needs CONFIG_FRAMEBUFFER_CONSOLE_ROTATION=y (set
+  # in linux.aarch64.conf). This only touches the boot console, not the Wayland
+  # compositor (sway keeps its own transform 270), so a wrong angle here is purely
+  # cosmetic. 3 = 270 (right-way-up on this device; 1 came out upside-down).
+    EXTRA_CMDLINE="rootwait quiet video=efifb:off console=tty0 fbcon=rotate:3"
 
   # Bootloader to use (syslinux / u-boot)
     BOOTLOADER="qcom-abl"

@@ -1,0 +1,69 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# beryllium (Poco F1) idle screen-off daemon.
+#
+# Turns the panel backlight off after IDLE_SECS of no input and restores it on
+# any input. We watch raw evdev (evtest) instead of the Wayland idle protocol
+# because EmulationStation holds a Wayland idle-inhibitor, so swayidle never
+# fires. Watching evdev also means gamepad BUTTON presses (EV_KEY) count as
+# activity - important since the Bluetooth controller is the main input and it
+# connects AFTER boot, so we re-scan for hotplugged devices on every tick.
+#
+# Only EV_KEY/EV_SW count as activity (not EV_ABS), so a drifting analog stick
+# doesn't keep the screen awake forever.
+
+BL=/sys/class/backlight/backlight
+SAVE=/tmp/.beryllium_bl_save
+ACT=/tmp/.beryllium_input_act
+WATCHDIR=/tmp/.beryllium_watched
+IDLE_SECS=${1:-300}
+STEP=5
+
+# Clear any stale state from a previous run (systemd Restart= kills the watcher
+# evtests with the cgroup, but their marker files in /tmp would survive and block
+# re-watching).
+rm -rf "$WATCHDIR" "$ACT"
+mkdir -p "$WATCHDIR"
+: > "$ACT"
+
+# Start an evtest watcher for any input device not already watched. Each watcher
+# touches $ACT on every key/switch event and exits when its device disappears
+# (e.g. the controller disconnects), clearing its marker so it can be re-added.
+scan_devices() {
+  for DEV in /dev/input/event*; do
+    [ -e "$DEV" ] || continue
+    name=$(basename "$DEV")
+    [ -e "$WATCHDIR/$name" ] && continue
+    : > "$WATCHDIR/$name"
+    (
+      while [ -e "$DEV" ]; do
+        evtest "$DEV" 2>/dev/null | grep --line-buffered -E "EV_KEY|EV_SW" | \
+          while IFS= read -r _; do : > "$ACT"; done
+        sleep 2
+      done
+      rm -f "$WATCHDIR/$name"
+    ) &
+  done
+}
+
+off=0
+idle=0
+while true; do
+  scan_devices
+  sleep "$STEP"
+  if [ -e "$ACT" ]; then
+    rm -f "$ACT"
+    idle=0
+    if [ "$off" = 1 ]; then
+      if [ -s "$SAVE" ]; then cat "$SAVE" > "$BL/brightness"; else echo 2047 > "$BL/brightness"; fi
+      off=0
+    fi
+  else
+    idle=$((idle + STEP))
+    if [ "$idle" -ge "$IDLE_SECS" ] && [ "$off" = 0 ]; then
+      cat "$BL/brightness" > "$SAVE"
+      echo 0 > "$BL/brightness"
+      off=1
+    fi
+  fi
+done

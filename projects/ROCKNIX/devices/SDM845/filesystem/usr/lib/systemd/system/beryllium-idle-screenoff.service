@@ -1,0 +1,13 @@
+[Unit]
+Description=beryllium idle screen-off (backlight off after idle, wake on input)
+Before=rocknix.target
+StartLimitIntervalSec=0
+
+[Service]
+# 300 = turn the panel backlight off after 5 min with no key/touch/gamepad input
+ExecStart=/usr/bin/beryllium-idle-screenoff 300
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

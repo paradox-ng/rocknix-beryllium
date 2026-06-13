@@ -17,7 +17,7 @@ the tarball, then extract it from the repo root - it drops both the qcom blobs a
 the TAS2559 files straight into place:
 
     # download beryllium-firmware.tar.gz from:
-    #   https://mega.nz/file/8IsFmZwI#qRJYJFSSnQnTBvsjLTdVdoiLWqRWhvVpEg20Lspgb2o
+    #   https://mega.nz/file/YJ92BR5L#JSXgidEs-mO7pQRFvrEO6oyMOyFaKJWR1eYiT6sK0FU
     tar xzf beryllium-firmware.tar.gz \
       -C projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/
 

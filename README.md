@@ -101,7 +101,7 @@ You can either **extract them from your own F1** (the clean way - `/vendor/firmw
 or a postmarketOS install), or grab a **prebuilt bundle** for convenience:
 
 - **Bundle:** download `beryllium-firmware.tar.gz` from
-  [Mega](https://mega.nz/file/8IsFmZwI#qRJYJFSSnQnTBvsjLTdVdoiLWqRWhvVpEg20Lspgb2o)
+  [Mega](https://mega.nz/file/YJ92BR5L#JSXgidEs-mO7pQRFvrEO6oyMOyFaKJWR1eYiT6sK0FU)
   and extract it from the repo root:
   ```
   tar xzf beryllium-firmware.tar.gz -C projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/

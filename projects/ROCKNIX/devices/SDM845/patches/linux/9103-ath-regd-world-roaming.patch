@@ -1,0 +1,20 @@
+--- a/drivers/net/wireless/ath/regd.c
++++ b/drivers/net/wireless/ath/regd.c
+@@ -697,6 +697,17 @@
+ 		return -EINVAL;
+ 	}
+ 
++	/*
++	 * Xiaomi Poco F1 (beryllium / WCN3990): the radio EEPROM is
++	 * hard-coded to country CN, which ath enforces as a STRICT
++	 * regdomain that disables 5 GHz channels 100-144. Override it
++	 * with world SKU 0x60 (WOR0_WORLD): its ath world regdomain is
++	 * ATH_5GHZ_ALL, which includes the 5470-5725 midband (passive /
++	 * NO_IR, so connectable to an AP), unlike the 0x64 default whose
++	 * regdomain is ATH_5GHZ_NO_MIDBAND.
++	 */
++	reg->current_rd = 0x60;
++
+ 	regdmn = ath_regd_get_eepromRD(reg);
+ 	reg->country_code = ath_regd_get_default_country(regdmn);
+ 

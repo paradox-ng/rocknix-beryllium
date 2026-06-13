@@ -66,3 +66,6 @@ projects/ROCKNIX/devices/SDM845/patches/linux/_disabled_for_fork/
 # device's vendor partition; NOT redistributable). tas2559_uCDSP.bin is the DSP
 # blob the driver loads; the .ftcfg are the L/R speaker tuning configs.
 projects/ROCKNIX/devices/SDM845/filesystem/usr/lib/kernel-overlays/base/lib/firmware/tas2559_*
+
+# Local proprietary-firmware bundle (host externally, never commit)
+/beryllium-firmware.tar.gz

@@ -151,8 +151,15 @@ so the rendering path matters a lot:
   `MESA_LOADER_DRIVER_OVERRIDE=zink %command%` to route GL → Vulkan → GPU.
 - **For an OpenGL game, the Windows build via Proton is often *faster*** than the
   native Linux build - D3D → DXVK → Vulkan avoids the emulated GL driver entirely.
-- **The build pins Steam/FEX to the 4 big A75 cores** for steadier frametimes. Note
-  the ceiling for emulated x86 *GL* games is FEX/thunk latency, not raw GPU power.
+- **Lower the render resolution for demanding games.** The panel is **2246×1080**
+  (~2.4 MP) - large for the Adreno 630 to fill, so GPU-heavy titles (even 2D ones,
+  which have lots of transparent overdraw) can be fragment-bound at native res.
+  Drop the resolution per-game or globally in Steam's display settings; rendering
+  at ~720p and upscaling often takes a title from ~25 fps to 60.
+- **The build pins Steam/FEX to the 4 big A75 cores and runs them at max clock
+  while a game is open** (restoring on-demand scaling on exit) for steadier
+  frametimes. Note the ceiling for emulated x86 *GL* games is FEX/thunk latency,
+  not raw GPU power.
 - **Charge with a direct charger, not a USB hub/dock.** A dock enumerates as a
   500 mA data port and can't keep up with gaming; a direct charger negotiates
   ~1.5 A. (Mainline has no Quick Charge, so heavy games may still slowly drain.)

@@ -9,6 +9,14 @@ STEAM_FLAVOR=arm64
 source /etc/profile
 set_kill set "gamescope steam FEX"
 
+# Run the CPU at max clock while gaming and restore the default on exit. Steam,
+# unlike the emulator path (runemu.sh), never touches the governor, so it would
+# otherwise idle at ondemand mid-clock. The EXIT trap survives the gamescope
+# scope re-exec below (that re-runs this script, which re-arms it) and fires
+# when Steam quits.
+performance
+trap ondemand EXIT
+
 # shellcheck source=start_steam.sh
 . /usr/bin/start_steam.sh
 

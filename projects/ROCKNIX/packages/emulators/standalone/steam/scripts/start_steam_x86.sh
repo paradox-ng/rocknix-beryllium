@@ -9,6 +9,12 @@ STEAM_FLAVOR=x86
 source /etc/profile
 set_kill set "-9 FEX"
 
+# Run the CPU at max clock while gaming and restore the default on exit (Steam,
+# unlike the emulator path, never touches the governor). The EXIT trap survives
+# the gamescope scope re-exec (that re-runs this script, which re-arms it).
+performance
+trap ondemand EXIT
+
 # shellcheck source=start_steam.sh
 . /usr/bin/start_steam.sh
 
